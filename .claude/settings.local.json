@@ -3,7 +3,10 @@
     "allow": [
       "mcp__supabase",
       "mcp__supabase__list_tables",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm --version)",
+      "Bash(npm install:*)",
+      "Bash(npx husky:*)"
     ]
   }
 }

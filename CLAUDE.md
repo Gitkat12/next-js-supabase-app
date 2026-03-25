@@ -26,20 +26,26 @@ npm run lint       # ESLint 실행
 ## 프로젝트 구조
 
 ### `/app`
+
 Next.js App Router 디렉토리. 주요 구조:
+
 - `layout.tsx` - 루트 레이아웃 (ThemeProvider, 글로벌 CSS 포함)
 - `page.tsx` - 홈페이지
 - `/auth/*` - 인증 페이지들 (로그인, 회원가입, 비밀번호 재설정 등)
 - `/protected/*` - 로그인 필수 페이지들
 
 ### `/components`
+
 React 컴포넌트들:
+
 - `/ui` - shadcn/ui 컴포넌트 (Button, Card, Input, Label 등)
 - 인증 폼 컴포넌트 (`login-form.tsx`, `sign-up-form.tsx`, `forgot-password-form.tsx` 등)
 - 기타 컴포넌트 (`auth-button.tsx`, `theme-switcher.tsx` 등)
 
 ### `/lib`
+
 유틸리티 및 설정:
+
 - `/supabase/client.ts` - 클라이언트 사이드 Supabase 클라이언트 (브라우저 환경용)
 - `/supabase/server.ts` - 서버 사이드 Supabase 클라이언트 (Server Components/Actions용)
 - `/supabase/proxy.ts` - API 라우트용 프록시 클라이언트
@@ -209,9 +215,9 @@ export function MyForm() {
 // Server Component/Action에서
 const supabase = await createClient();
 const { data, error } = await supabase
-  .from('table_name')
-  .select('*')
-  .eq('id', userId);
+  .from("table_name")
+  .select("*")
+  .eq("id", userId);
 ```
 
 ## 주의사항
@@ -219,4 +225,4 @@ const { data, error } = await supabase
 - Supabase 서버 클라이언트는 **함수 내에서 매번 새로 생성**해야 합니다
 - 클라이언트 컴포넌트와 서버 컴포넌트 간 경계를 명확히 하세요
 - `.env.local`은 git에 커밋하지 않습니다
-- NEXT_PUBLIC_* 변수는 브라우저에 노출되므로 민감한 정보를 담지 않습니다
+- NEXT*PUBLIC*\* 변수는 브라우저에 노출되므로 민감한 정보를 담지 않습니다

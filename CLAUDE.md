@@ -4,15 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-Next.js 15 + Supabase 스타터 키트입니다. Supabase를 사용한 사용자 인증, Tailwind CSS 스타일링, shadcn/ui 컴포넌트가 포함되어 있습니다.
+**모임** — 소규모 모임 이벤트 관리 웹 서비스입니다. 카카오톡에 묻히는 공지/참여 확인을 한 곳에서 관리하여 주최자의 운영 부담을 줄입니다.
+
+- **주최자**: Google 로그인 후 이벤트 생성·관리·공지 등록
+- **참여자**: 로그인 없이 공유 링크로 참여 응답
 
 ## 주요 스택
 
 - **프론트엔드**: Next.js 15 (App Router), React 19, TypeScript
 - **UI**: shadcn/ui + Tailwind CSS
-- **인증**: Supabase Auth (SSR 방식, 쿠키 기반 세션)
+- **인증**: Supabase Auth — Google OAuth 전용 (쿠키 기반 SSR 세션)
+- **백엔드**: Supabase (PostgreSQL, Realtime)
 - **테마**: next-themes (라이트/다크 모드)
 - **아이콘**: lucide-react
+- **배포**: Vercel
 
 ## 커맨드
 
@@ -21,208 +26,142 @@ npm run dev        # 개발 서버 시작 (localhost:3000)
 npm run build      # 프로덕션 빌드
 npm run start      # 빌드된 앱 시작
 npm run lint       # ESLint 실행
+npm run typecheck  # TypeScript 타입 검사
+npm run validate   # typecheck + lint + format:check 전체 검사
 ```
 
 ## 프로젝트 구조
 
-### `/app`
+```
+app/
+  layout.tsx              # 루트 레이아웃 (ThemeProvider, 글로벌 CSS)
+  page.tsx                # 홈페이지 (서비스 소개 랜딩)
+  auth/                   # 인증 페이지 (공개)
+  protected/              # 임시 보호 페이지 (스타터킷 잔재)
+  events/                 # 이벤트 라우트 (Phase 1~3 구현 예정)
+    layout.tsx            # 이벤트 공통 레이아웃
+    page.tsx              # 이벤트 목록 (로그인 필수)
+    new/page.tsx          # 이벤트 생성 (로그인 필수)
+    [id]/page.tsx         # 이벤트 상세 (공개 — share_token 기반)
+    [id]/manage/page.tsx  # 이벤트 관리 (로그인 필수 + 본인 이벤트)
+components/
+  layout/                 # 공통 레이아웃 컴포넌트
+    header.tsx            # 서비스 헤더
+    footer.tsx            # 서비스 푸터
+  ui/                     # shadcn/ui 컴포넌트 (직접 수정 금지)
+  events/                 # 이벤트 전용 컴포넌트 (Phase 2 예정)
+  auth-button.tsx         # 인증 상태 버튼 (Server Component)
+  logout-button.tsx       # 로그아웃 버튼 (Client Component)
+lib/
+  supabase/
+    client.ts             # 클라이언트 컴포넌트용 Supabase 클라이언트
+    server.ts             # 서버 컴포넌트/액션용 Supabase 클라이언트
+    proxy.ts              # API 라우트용 Supabase 클라이언트
+    profiles.ts           # 프로필 DB 함수
+  dummy-data.ts           # 더미 데이터 및 헬퍼 함수 (Phase 2 UI용)
+  utils.ts                # cn() 등 유틸리티 함수
+types/
+  database.ts             # 모든 DB 타입 정의 (Event, Announcement, Attendee 등)
+docs/
+  PRD.md                  # 제품 요구사항 문서
+  ROADMAP.md              # 단계별 개발 로드맵
+shrimp-rules.md           # AI Agent 전용 개발 규칙 (shrimp-task-manager)
+```
 
-Next.js App Router 디렉토리. 주요 구조:
+## 라우팅 규칙
 
-- `layout.tsx` - 루트 레이아웃 (ThemeProvider, 글로벌 CSS 포함)
-- `page.tsx` - 홈페이지
-- `/auth/*` - 인증 페이지들 (로그인, 회원가입, 비밀번호 재설정 등)
-- `/protected/*` - 로그인 필수 페이지들
+| 라우트                | 접근 권한                 | 비고                              |
+| --------------------- | ------------------------- | --------------------------------- |
+| `/`                   | 공개                      | 로그인 시 `/events`로 리디렉션    |
+| `/auth/*`             | 공개                      | Google OAuth 전용                 |
+| `/events`             | 로그인 필수               | 내 이벤트 목록                    |
+| `/events/new`         | 로그인 필수               | 이벤트 생성 폼                    |
+| `/events/[id]`        | 공개                      | share_token 기반 비회원 접근 허용 |
+| `/events/[id]/manage` | 로그인 필수 + 본인 이벤트 | organizer_id 확인                 |
 
-### `/components`
+## Supabase 인증 시스템
 
-React 컴포넌트들:
+이 프로젝트는 **쿠키 기반 세션 관리**를 사용합니다 (`@supabase/ssr` 패키지).
 
-- `/ui` - shadcn/ui 컴포넌트 (Button, Card, Input, Label 등)
-- 인증 폼 컴포넌트 (`login-form.tsx`, `sign-up-form.tsx`, `forgot-password-form.tsx` 등)
-- 기타 컴포넌트 (`auth-button.tsx`, `theme-switcher.tsx` 등)
+### 클라이언트 선택 규칙
 
-### `/lib`
+| 환경                                           | import 경로              |
+| ---------------------------------------------- | ------------------------ |
+| Server Component, Server Action, Route Handler | `lib/supabase/server.ts` |
+| Client Component (`'use client'`)              | `lib/supabase/client.ts` |
+| API Route Handler                              | `lib/supabase/proxy.ts`  |
 
-유틸리티 및 설정:
+- 서버 클라이언트는 **함수 내에서 매번 새로 생성**: `const supabase = await createClient()`
+- 클라이언트 컴포넌트에서 `server.ts` import **절대 금지**
 
-- `/supabase/client.ts` - 클라이언트 사이드 Supabase 클라이언트 (브라우저 환경용)
-- `/supabase/server.ts` - 서버 사이드 Supabase 클라이언트 (Server Components/Actions용)
-- `/supabase/proxy.ts` - API 라우트용 프록시 클라이언트
-- `utils.ts` - 유틸리티 함수들
+### 인증 패턴
 
-## Supabase 인증 시스템 이해하기
+```typescript
+// 서버 컴포넌트에서 로그인 확인
+const supabase = await createClient();
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+if (!user) redirect("/auth/login");
+```
 
-이 프로젝트는 **쿠키 기반 세션 관리**를 사용합니다 (supabase-ssr 패키지).
+```typescript
+// 클라이언트 컴포넌트
+"use client";
+import { createClient } from "@/lib/supabase/client";
+const supabase = createClient(); // await 없음
+```
 
-### 클라이언트 vs 서버 클라이언트 분리
-
-1. **클라이언트 컴포넌트에서**: `lib/supabase/client.ts`의 `createClient()` 사용
-   - Client Component에서만 사용
-   - 브라우저 환경에서만 동작
-
-2. **서버 컴포넌트/액션에서**: `lib/supabase/server.ts`의 `createClient()` 사용
-   - Server Component, Server Action, Route Handler에서 사용
-   - 쿠키를 자동으로 관리
-   - **중요**: 함수 내에서 매번 새로운 클라이언트를 생성해야 함 (Fluid compute 사용 시)
-
-3. **API 라우트에서**: `lib/supabase/proxy.ts` 사용 (필요시)
-
-### 인증 흐름
-
-- 사용자 로그인 → 세션 쿠키 저장 → 다른 페이지에서 쿠키로 세션 유지
-- `/app/auth/*` 페이지에서 가입/로그인 처리
-- `/app/protected/*`는 인증된 사용자만 접근 가능 (서버에서 인증 확인)
-
-## 환경 설정
-
-### 필수 환경 변수 (`.env.local`)
+## 환경 변수 (`.env.local`)
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJ...
 ```
 
-- 이 값들은 Supabase 대시보드의 "Project Settings > API"에서 찾을 수 있습니다
-- `NEXT_PUBLIC_*` 접두사는 브라우저에 노출되어도 안전한 공개 키입니다
+## 데이터 모델
 
-## 주요 패턴
+### events
 
-### 서버 컴포넌트에서 사용자 확인
+`id`, `organizer_id`, `title`, `description`, `location`, `event_date`, `rsvp_deadline`, `max_attendees`, `share_token`, `created_at`
 
-```typescript
-// app/protected/page.tsx 패턴
-import { createClient } from "@/lib/supabase/server";
+### announcements
 
-export default async function ProtectedPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+`id`, `event_id`, `title`, `content`, `is_pinned`, `created_at`
 
-  if (!user) {
-    // 인증 확인 로직
-  }
+### attendees
 
-  return <div>...</div>;
-}
-```
+`id`, `event_id`, `user_id(nullable)`, `guest_name(nullable)`, `status(attending|not_attending|maybe|waiting)`, `memo`, `created_at`
 
-### 클라이언트 컴포넌트에서 인증
+## 개발 워크플로우
 
-```typescript
-// 'use client';
-import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
-
-export function AuthButton() {
-  const [user, setUser] = useState(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
-  }, [supabase]);
-
-  return <button>{user ? "Logout" : "Login"}</button>;
-}
-```
+1. `docs/PRD.md` — 기능 명세 확인
+2. `docs/ROADMAP.md` — 현재 단계(Phase) 확인
+3. **Phase 순서 필수 준수**: 더미 데이터 UI 완성 → DB 스키마 확정 → 실제 API 연동
+4. 작업 완료 후 `docs/ROADMAP.md` 업데이트
 
 ## shadcn/ui 컴포넌트 추가
-
-shadcn/ui 컴포넌트를 추가하려면:
 
 ```bash
 npx shadcn-ui@latest add <component-name>
 ```
 
-예: `npx shadcn-ui@latest add dialog`
-
-- 컴포넌트는 `/components/ui/`에 생성됩니다
-- `components.json`에 설정된 경로를 따릅니다 (Tailwind CSS 설정 포함)
-
-## 배포
-
-### Vercel 배포
-
-1. GitHub에 푸시
-2. Vercel에서 프로젝트 임포트
-3. 환경 변수 설정 (위의 필수 환경 변수 참고)
-4. Supabase Vercel Integration 연결 (자동으로 환경 변수 주입)
-
-### 로컬 Supabase 개발
-
-Supabase CLI를 사용하여 로컬 개발:
-
-```bash
-npx supabase start
-```
-
-상세 가이드: https://supabase.com/docs/guides/getting-started/local-development
-
-## 라우팅 규칙
-
-- `app/page.tsx` - 공개 홈페이지
-- `app/auth/*` - 인증 관련 페이지 (공개)
-- `app/protected/*` - 인증 필수 페이지 (서버에서 확인)
+- 컴포넌트는 `components/ui/`에 생성됩니다
+- **`components/ui/` 내 파일 직접 수정 금지**
+- 설치된 컴포넌트: Button, Card, Input, Label, Badge, Checkbox, DropdownMenu
 
 ## 코딩 스타일
 
 - 2칸 들여쓰기
 - TypeScript 필수
-- 클라이언트/서버 분리 명확히 ('use client' 지시문 사용)
+- 클라이언트/서버 컴포넌트 분리 명확히 (`'use client'` 지시문)
 - 한국어 주석/커밋 메시지
-
-## 자주 하는 작업
-
-### 새 페이지 추가
-
-```typescript
-// app/some-page/page.tsx
-import { createClient } from "@/lib/supabase/server";
-
-export default async function SomePage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  return <div>...</div>;
-}
-```
-
-### 새 폼 컴포넌트 추가
-
-```typescript
-// 'use client';
-import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
-
-export function MyForm() {
-  const supabase = createClient();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // 로직...
-  };
-
-  return <form onSubmit={handleSubmit}>...</form>;
-}
-```
-
-### 데이터베이스 쿼리
-
-```typescript
-// Server Component/Action에서
-const supabase = await createClient();
-const { data, error } = await supabase
-  .from("table_name")
-  .select("*")
-  .eq("id", userId);
-```
+- 변수명/함수명은 영어
 
 ## 주의사항
 
-- Supabase 서버 클라이언트는 **함수 내에서 매번 새로 생성**해야 합니다
-- 클라이언트 컴포넌트와 서버 컴포넌트 간 경계를 명확히 하세요
-- `.env.local`은 git에 커밋하지 않습니다
-- NEXT*PUBLIC*\* 변수는 브라우저에 노출되므로 민감한 정보를 담지 않습니다
+- **Google OAuth만 지원** — 이메일/비밀번호 로그인 UI 추가 금지
+- Supabase 서버 클라이언트는 **함수 내에서 매번 새로 생성**
+- `.env.local`은 git에 커밋하지 않음
+- `NEXT_PUBLIC_*` 변수에 민감한 정보(서비스 롤 키 등) 저장 금지
+- 타입은 `types/database.ts`에만 정의 (분산 정의 금지)

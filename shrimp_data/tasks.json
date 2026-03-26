@@ -1,0 +1,204 @@
+{
+  "tasks": [
+    {
+      "id": "73f379e0-6701-4aba-baa2-ed8b7bf4b926",
+      "name": "Task 001-A: 공통 레이아웃 컴포넌트 생성",
+      "description": "서비스 전체에서 재사용할 Header, Footer 컴포넌트를 생성한다. 기존 protected/layout.tsx의 인라인 nav/footer 구조를 분리하여 독립 컴포넌트로 만든다.\n\n수락 기준:\n- Header: 로고(모임), 로그인 시 '내 이벤트' 링크 표시, AuthButton 포함\n- Footer: ThemeSwitcher 포함, 최소 구성\n- Server Component로 구현 (Header는 AuthButton 재사용)\n- Tailwind CSS 스타일링",
+      "status": "pending",
+      "dependencies": [],
+      "createdAt": "2026-03-26T00:17:22.017Z",
+      "updatedAt": "2026-03-26T00:17:22.017Z",
+      "relatedFiles": [
+        {
+          "path": "components/layout/header.tsx",
+          "type": "CREATE",
+          "description": "서비스 공통 헤더 컴포넌트"
+        },
+        {
+          "path": "components/layout/footer.tsx",
+          "type": "CREATE",
+          "description": "서비스 공통 푸터 컴포넌트"
+        },
+        {
+          "path": "components/auth-button.tsx",
+          "type": "REFERENCE",
+          "description": "기존 인증 버튼 컴포넌트 (재사용)"
+        },
+        {
+          "path": "components/theme-switcher.tsx",
+          "type": "REFERENCE",
+          "description": "기존 테마 스위처 컴포넌트 (재사용)"
+        },
+        {
+          "path": "app/protected/layout.tsx",
+          "type": "REFERENCE",
+          "description": "기존 레이아웃 패턴 참조"
+        }
+      ],
+      "implementationGuide": "1. components/layout/header.tsx 생성\n   - import AuthButton from components/auth-button.tsx (기존 재사용)\n   - 로고 링크(/) + 내비게이션 + AuthButton 배치\n   - Server Component (async function)\n2. components/layout/footer.tsx 생성\n   - import ThemeSwitcher from components/theme-switcher.tsx (기존 재사용)\n   - 최소 구성 (copyright 텍스트 + ThemeSwitcher)\n3. 두 컴포넌트 모두 Server Component (use client 없음)",
+      "verificationCriteria": "- components/layout/header.tsx 파일 존재\n- components/layout/footer.tsx 파일 존재\n- 두 파일 모두 TypeScript 타입 오류 없음\n- 'use client' 지시문 없음 (Server Component)",
+      "analysisResult": "Phase 1 애플리케이션 골격 구축: 모임 이벤트 관리 웹 서비스의 기본 라우트 구조, 공통 레이아웃, 타입 정의, 더미 데이터를 구성한다. 실제 DB 연동 없이 골격만 생성하며, Phase 2 UI 구현의 기반이 된다."
+    },
+    {
+      "id": "5ee043db-d466-4ba1-b656-7adc805688ea",
+      "name": "Task 001-B: 홈페이지 랜딩 페이지 재작성",
+      "description": "기존 스타터킷 튜토리얼 UI(Hero, ConnectSupabaseSteps, DeployButton 등)를 제거하고 서비스 소개 랜딩 페이지로 교체한다. app/layout.tsx 메타데이터도 서비스명으로 변경한다.\n\n수락 기준:\n- 서비스명: '모임' (소규모 모임 이벤트 관리)\n- 서비스 핵심 가치 소개 (공지/참여 관리/공유 링크)\n- '시작하기' CTA 버튼 → /auth/login 링크\n- 로그인 상태이면 /events로 리디렉션\n- Header, Footer 컴포넌트 사용\n- 스타터킷 전용 컴포넌트(DeployButton, EnvVarWarning, Hero, tutorial/*) import 제거",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "73f379e0-6701-4aba-baa2-ed8b7bf4b926"
+        }
+      ],
+      "createdAt": "2026-03-26T00:17:22.017Z",
+      "updatedAt": "2026-03-26T00:17:22.017Z",
+      "relatedFiles": [
+        {
+          "path": "app/page.tsx",
+          "type": "TO_MODIFY",
+          "description": "홈페이지 랜딩 페이지 재작성"
+        },
+        {
+          "path": "app/layout.tsx",
+          "type": "TO_MODIFY",
+          "description": "메타데이터 서비스명 변경"
+        },
+        {
+          "path": "components/layout/header.tsx",
+          "type": "DEPENDENCY",
+          "description": "공통 헤더 컴포넌트"
+        },
+        {
+          "path": "components/layout/footer.tsx",
+          "type": "DEPENDENCY",
+          "description": "공통 푸터 컴포넌트"
+        },
+        {
+          "path": "lib/supabase/server.ts",
+          "type": "REFERENCE",
+          "description": "서버 Supabase 클라이언트"
+        }
+      ],
+      "implementationGuide": "pseudocode:\nexport default async function Home() {\n  supabase = await createClient()\n  user = await supabase.auth.getUser()\n  if user → redirect('/events')\n  return (\n    <div>\n      <Header />\n      <main>\n        히어로 섹션: '모임' 제목 + 설명 + Link href='/auth/login' '시작하기'\n        기능 소개: 이벤트 관리 / 참여 응답 / 공지사항 카드 3개\n      </main>\n      <Footer />\n    </div>\n  )\n}",
+      "verificationCriteria": "- app/page.tsx에서 DeployButton, EnvVarWarning, Hero, tutorial 컴포넌트 import 없음\n- '시작하기' 버튼이 /auth/login으로 연결\n- 로그인 상태에서 / 접속 시 /events로 리디렉션\n- TypeScript 오류 없음\n- npm run build 통과",
+      "analysisResult": "Phase 1 애플리케이션 골격 구축: 모임 이벤트 관리 웹 서비스의 기본 라우트 구조, 공통 레이아웃, 타입 정의, 더미 데이터를 구성한다. 실제 DB 연동 없이 골격만 생성하며, Phase 2 UI 구현의 기반이 된다."
+    },
+    {
+      "id": "8bf65bd5-cfe4-4d22-bf8d-d977823c2b1d",
+      "name": "Task 001-C: 이벤트 라우트 구조 및 페이지 골격 생성",
+      "description": "이벤트 관련 4개 라우트의 레이아웃과 빈 페이지 컴포넌트를 생성한다. 각 페이지는 실제 UI 없이 인증 확인 로직과 기본 구조만 포함한다.\n\n수락 기준:\n- app/events/layout.tsx: Header + Footer 포함 공통 레이아웃\n- app/events/page.tsx: 로그인 확인 후 '이벤트 목록' 제목 표시\n- app/events/new/page.tsx: 로그인 확인 후 '이벤트 생성' 제목 표시\n- app/events/[id]/page.tsx: 인증 불필요, 'params.id' 수신, '이벤트 상세' 제목 표시\n- app/events/[id]/manage/page.tsx: 로그인 확인 후 '이벤트 관리' 제목 표시",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "73f379e0-6701-4aba-baa2-ed8b7bf4b926"
+        }
+      ],
+      "createdAt": "2026-03-26T00:17:22.017Z",
+      "updatedAt": "2026-03-26T00:17:22.017Z",
+      "relatedFiles": [
+        {
+          "path": "app/events/layout.tsx",
+          "type": "CREATE",
+          "description": "이벤트 섹션 공통 레이아웃"
+        },
+        {
+          "path": "app/events/page.tsx",
+          "type": "CREATE",
+          "description": "이벤트 목록 페이지 골격"
+        },
+        {
+          "path": "app/events/new/page.tsx",
+          "type": "CREATE",
+          "description": "이벤트 생성 페이지 골격"
+        },
+        {
+          "path": "app/events/[id]/page.tsx",
+          "type": "CREATE",
+          "description": "이벤트 상세 페이지 골격"
+        },
+        {
+          "path": "app/events/[id]/manage/page.tsx",
+          "type": "CREATE",
+          "description": "이벤트 관리 페이지 골격"
+        },
+        {
+          "path": "components/layout/header.tsx",
+          "type": "DEPENDENCY",
+          "description": "공통 헤더 컴포넌트"
+        },
+        {
+          "path": "components/layout/footer.tsx",
+          "type": "DEPENDENCY",
+          "description": "공통 푸터 컴포넌트"
+        },
+        {
+          "path": "lib/supabase/server.ts",
+          "type": "REFERENCE",
+          "description": "서버 Supabase 클라이언트"
+        }
+      ],
+      "implementationGuide": "pseudocode:\n\napp/events/layout.tsx:\nexport default function EventsLayout({ children }) {\n  return <div><Header /><main>{children}</main><Footer /></div>\n}\n\napp/events/page.tsx (로그인 필요):\nexport default async function EventsPage() {\n  supabase = await createClient()\n  { data: { user } } = await supabase.auth.getUser()\n  if (!user) redirect('/auth/login')\n  return <div><h1>이벤트 목록</h1><p>이벤트 목록이 여기에 표시됩니다.</p></div>\n}\n\napp/events/new/page.tsx (로그인 필요):\n동일 패턴, h1='이벤트 생성'\n\napp/events/[id]/page.tsx (공개):\nexport default async function EventDetailPage({ params }) {\n  const { id } = await params\n  return <div><h1>이벤트 상세</h1><p>이벤트 ID: {id}</p></div>\n}\n\napp/events/[id]/manage/page.tsx (로그인 필요):\n로그인 확인 후 h1='이벤트 관리'",
+      "verificationCriteria": "- 5개 파일 모두 존재\n- /events, /events/new, /events/[id]/manage: 비로그인 시 /auth/login 리디렉션\n- /events/[id]: 인증 없이 접근 가능\n- Next.js 15 params await 패턴 사용 (const { id } = await params)\n- TypeScript 오류 없음\n- npm run build 통과",
+      "analysisResult": "Phase 1 애플리케이션 골격 구축: 모임 이벤트 관리 웹 서비스의 기본 라우트 구조, 공통 레이아웃, 타입 정의, 더미 데이터를 구성한다. 실제 DB 연동 없이 골격만 생성하며, Phase 2 UI 구현의 기반이 된다."
+    },
+    {
+      "id": "42ab7140-0b84-4b1a-91fc-37a48502b2f6",
+      "name": "Task 002: 타입 정의 및 더미 데이터 작성",
+      "description": "서비스 도메인 타입(Event, Announcement, Attendee)을 types/database.ts에 추가하고, Phase 2 UI 개발에 사용할 더미 데이터를 lib/dummy-data.ts에 작성한다.\n\n수락 기준:\n- Event, Announcement, Attendee 타입 정의\n- API 응답 타입 (EventWithStats, EventWithAnnouncements, EventDetail) 정의\n- 더미 이벤트 2개 이상\n- 더미 공지사항 각 이벤트별 1개 이상 (is_pinned 포함)\n- 더미 참여자 각 이벤트별 4가지 status(attending/not_attending/maybe/waiting) 포함\n- 헬퍼 함수: getDummyEvent, getDummyEventAnnouncements, getDummyEventAttendees",
+      "status": "pending",
+      "dependencies": [],
+      "createdAt": "2026-03-26T00:17:22.017Z",
+      "updatedAt": "2026-03-26T00:17:22.017Z",
+      "relatedFiles": [
+        {
+          "path": "types/database.ts",
+          "type": "TO_MODIFY",
+          "description": "Event, Announcement, Attendee 타입 추가"
+        },
+        {
+          "path": "lib/dummy-data.ts",
+          "type": "CREATE",
+          "description": "더미 데이터 및 헬퍼 함수"
+        },
+        {
+          "path": "docs/PRD.md",
+          "type": "REFERENCE",
+          "description": "데이터 모델 명세 참조",
+          "lineStart": 207,
+          "lineEnd": 246
+        }
+      ],
+      "implementationGuide": "1. types/database.ts 수정 (Profile 타입 유지, 하단에 추가)\n   Event 타입 필드: id(string), organizer_id(string), title(string), description(string|null), location(string), event_date(string), rsvp_deadline(string|null), max_attendees(number|null), share_token(string), created_at(string)\n   Announcement: id, event_id, title, content, is_pinned(boolean), created_at\n   Attendee: id, event_id, user_id(string|null), guest_name(string|null), status('attending'|'not_attending'|'maybe'|'waiting'), memo(string|null), created_at\n   AttendeeStatus = 'attending' | 'not_attending' | 'maybe' | 'waiting'\n   EventWithStats = Event & { attendee_count: number, waiting_count: number }\n   EventDetail = Event & { announcements: Announcement[], attendees: Attendee[] }\n\n2. lib/dummy-data.ts 생성\n   DUMMY_EVENTS: Event[] (2개, share_token은 'token-001', 'token-002')\n   DUMMY_ANNOUNCEMENTS: Announcement[] (이벤트별 1~2개, 1개는 is_pinned: true)\n   DUMMY_ATTENDEES: Attendee[] (이벤트별 5~6명, 4가지 status 포함)\n   헬퍼 함수:\n   - getDummyEvent(id: string): Event | undefined\n   - getDummyEventByToken(token: string): Event | undefined\n   - getDummyEventAnnouncements(eventId: string): Announcement[]\n   - getDummyEventAttendees(eventId: string): Attendee[]\n   - getDummyEventWithStats(id: string): EventWithStats | undefined",
+      "verificationCriteria": "- types/database.ts에 Event, Announcement, Attendee, AttendeeStatus, EventWithStats, EventDetail 타입 존재\n- lib/dummy-data.ts에 DUMMY_EVENTS(2개 이상), DUMMY_ANNOUNCEMENTS, DUMMY_ATTENDEES 배열 존재\n- getDummyEvent, getDummyEventByToken, getDummyEventAnnouncements, getDummyEventAttendees, getDummyEventWithStats 함수 존재\n- DUMMY_ATTENDEES에 4가지 status 모두 포함\n- TypeScript 오류 없음 (npm run typecheck 통과)",
+      "analysisResult": "Phase 1 애플리케이션 골격 구축: 모임 이벤트 관리 웹 서비스의 기본 라우트 구조, 공통 레이아웃, 타입 정의, 더미 데이터를 구성한다. 실제 DB 연동 없이 골격만 생성하며, Phase 2 UI 구현의 기반이 된다."
+    },
+    {
+      "id": "4c6d6cf5-59ae-4e4e-8fed-4a532032d838",
+      "name": "Task 001-D: ROADMAP.md Task 001, Task 002 완료 표시",
+      "description": "Phase 1 Task 001, Task 002 구현 완료 후 docs/ROADMAP.md의 해당 항목을 완료 체크로 업데이트한다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "5ee043db-d466-4ba1-b656-7adc805688ea"
+        },
+        {
+          "taskId": "8bf65bd5-cfe4-4d22-bf8d-d977823c2b1d"
+        },
+        {
+          "taskId": "42ab7140-0b84-4b1a-91fc-37a48502b2f6"
+        }
+      ],
+      "createdAt": "2026-03-26T00:17:22.017Z",
+      "updatedAt": "2026-03-26T00:17:22.017Z",
+      "relatedFiles": [
+        {
+          "path": "docs/ROADMAP.md",
+          "type": "TO_MODIFY",
+          "description": "Task 001, 002 완료 표시 업데이트"
+        }
+      ],
+      "implementationGuide": "docs/ROADMAP.md에서:\n- [ ] Task 001: 프로젝트 구조 및 라우팅 설정 → [x] 로 변경\n- [ ] Task 002: 타입 정의 및 더미 데이터 설계 → [x] 로 변경",
+      "verificationCriteria": "- docs/ROADMAP.md에서 Task 001, Task 002 항목이 [x]로 표시됨",
+      "analysisResult": "Phase 1 애플리케이션 골격 구축: 모임 이벤트 관리 웹 서비스의 기본 라우트 구조, 공통 레이아웃, 타입 정의, 더미 데이터를 구성한다. 실제 DB 연동 없이 골격만 생성하며, Phase 2 UI 구현의 기반이 된다."
+    }
+  ]
+}

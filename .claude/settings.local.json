@@ -6,7 +6,9 @@
       "Bash(npm run:*)",
       "Bash(npm --version)",
       "Bash(npm install:*)",
-      "Bash(npx husky:*)"
+      "Bash(npx husky:*)",
+      "mcp__shrimp-task-manager__init_project_rules",
+      "mcp__shrimp-task-manager__process_thought"
     ]
   }
 }
